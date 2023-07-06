@@ -206,66 +206,43 @@ st.sidebar.image(image, width=120)
 
 st.sidebar.markdown("# Fome Zero")
 
-# Filtros da Página:
+# Função Filtros da Página e Download dos Dados:
+
 st.sidebar.markdown("## Filtros")
 st.sidebar.markdown("#### Escolha os países para visualizar os dados dos restaurantes:")
 
-countries_options = st.sidebar.multiselect(
-    "Quais países?",
-    [
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "Indonesia",
-        "New Zeland",
-        "Philippines",
-        "Qatar",
-        "Singapure",
-        "South Africa",
-        "Sri Lanka",
-        "Turkey",
-        "United Arab Emirates",
-        "United States of America",
-    ],
-    default=[
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "Indonesia",
-        "New Zeland",
-        "Philippines",
-        "Qatar",
-        "Singapure",
-        "South Africa",
-        "Sri Lanka",
-        "Turkey",
-        "United Arab Emirates",
-        "United States of America",
-    ],
-)
 
-# Download dos Dados Tratados no Dataframe:
-st.sidebar.markdown("### Dados Analisados")
-processed_data = pd.read_csv("zomato.csv")
-st.sidebar.download_button(
-    label="Download",
-    data=processed_data.to_csv(index=False, sep=";"),
-    file_name="zomato.csv",
-    mime="text/csv",
-)
+def create_filter_countries(df):
+    countries_options = st.sidebar.multiselect(
+        "Quais países?",
+        df.loc[:, "Country_Name"].unique().tolist(),
+        default=[
+            "Australia",
+            "Brazil",
+            "Canada",
+            "England",
+            "India",
+            "Qatar",
+            "South Africa",
+            "United States of America",
+        ],
+    )
 
-# Ativar o Filtro nos Gráficos:
+    st.sidebar.markdown("### Dados Analisados")
+    processed_data = pd.read_csv("zomato.csv")
+    st.sidebar.download_button(
+        label="Download",
+        data=processed_data.to_csv(index=False, sep=";"),
+        file_name="zomato.csv",
+        mime="text/csv",
+    )
+    return list(countries_options)
 
-# Filtro de Países:
-linhas_selecionadas = df["Country_Name"].isin(countries_options)
-df = df.loc[linhas_selecionadas, :]
 
-# Filtro no Mapa:
-map_df = df.loc[df["Country_Name"].isin(countries_options), :]
+# Ativar o Filtro no Mapa:
+
+selected_countries = create_filter_countries(df)
+map_df = df.loc[df["Country_Name"].isin(selected_countries), :]
 
 
 #  --------------------------------------------- Layout no Streamlit ---------------------------------------------------------

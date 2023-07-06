@@ -148,61 +148,125 @@ df["Price_range"] = df["Price_range"].map(create_price_type)
 ## -------------------------------------------------- Outras funções utilizadas: --------------------------------------------------------
 
 
-# Função Melhores Restaurantes dos Tipos de Culinária principais:
-def get_best_restaurant(cuisine):
-    """Esta função seleciona os melhores restaurantes de uma determinada culinária, com base em sua avaliação e número de votos,
-    e retorna o tipo de culinária, o nome e a avaliação do restaurante com a melhor classificação.
+# Funções para os Melhores Restaurantes dos Tipos de Culinária principais:
+def top_cuisines(df):
+    cuisines = {
+        "Italian": "",
+        "American": "",
+        "Arabian": "",
+        "Japanese": "",
+        "Brazilian": "",
+    }
 
-    Etapas:
-    1 - Selecionar os dados dos restaurantes que possuem uma determinada culinária.
-    2 - Ordenar os restaurantes selecionados pelo rating agregado e pelo número de votos, em ordem descendente.
-    3 - Selecionar os cinco melhores restaurantes.
-    4 - Resetar o índice dos restaurantes selecionados.
-    5 - Extrair o tipo de culinária, o nome do restaurante e a avaliação do restaurante com a melhor classificação dos dados selecionados.
-    6 - Retornar o tipo de culinária, o nome do restaurante e a avaliação do restaurante com a melhor classificação.
-
-    Input: Dados dos países, cidades, restaurantes e tipos de culinária para análise.
-    Output: Nomes dos melhores restaurantes, a culinária e suas avaliações.
-    """
-    restaurantes = df.loc[
-        df["Cuisines"] == cuisine,
-        ["Country_Name", "Restaurant_Name", "Cuisines", "Aggregate_rating", "Votes"],
+    cols = [
+        "Restaurant_ID",
+        "Restaurant_Name",
+        "Country_Name",
+        "City",
+        "Cuisines",
+        "Average_Cost_for_two",
+        "Currency",
+        "Aggregate_rating",
+        "Votes",
     ]
-    maiores_restaurantes = (
-        restaurantes.sort_values(["Aggregate_rating", "Votes"], ascending=False)
-        .head()
-        .reset_index()
-    )
 
-    tipo_culinaria = maiores_restaurantes["Cuisines"].values[0]
-    nome_maior = maiores_restaurantes["Restaurant_Name"].values[0]
-    avaliacao_maior = maiores_restaurantes["Aggregate_rating"].values[0]
-    return tipo_culinaria, nome_maior, avaliacao_maior
+    for key in cuisines.keys():
+        lines = df["Cuisines"] == key
+
+        cuisines[key] = (
+            df.loc[lines, cols]
+            .sort_values(["Aggregate_rating", "Restaurant_ID"], ascending=[False, True])
+            .iloc[0, :]
+            .to_dict()
+        )
+
+    return cuisines
+
+
+def write_metrics():
+    cuisines = top_cuisines(df)
+
+    italian, american, arabian, japanese, brazilian = st.columns(len(cuisines))
+
+    with italian:
+        st.metric(
+            label=f'Italiana: {cuisines["Italian"]["Restaurant_Name"]}',
+            value=f'{cuisines["Italian"]["Aggregate_rating"]}/5.0',
+            help=f"""
+            Culinária: {cuisines["Italian"]['Cuisines']}\n
+            Nome do Restaurante: {cuisines["Italian"]['Restaurant_Name']}\n
+            País: {cuisines["Italian"]['Country_Name']}\n
+            Cidade: {cuisines["Italian"]['City']}\n
+            Média Prato para dois: {cuisines["Italian"]['Average_Cost_for_two']} ({cuisines["Italian"]['Currency']})
+            """,
+        )
+
+    with american:
+        st.metric(
+            label=f'American: {cuisines["American"]["Restaurant_Name"]}',
+            value=f'{cuisines["American"]["Aggregate_rating"]}/5.0',
+            help=f"""
+            Culinária: {cuisines["American"]['Cuisines']}\n
+            Nome do Restaurante: {cuisines["American"]['Restaurant_Name']}\n
+            País: {cuisines["American"]['Country_Name']}\n
+            Cidade: {cuisines["American"]['City']}\n
+            Média Prato para dois: {cuisines["American"]['Average_Cost_for_two']} ({cuisines["American"]['Currency']})
+            """,
+        )
+
+    with arabian:
+        st.metric(
+            label=f'Arabian: {cuisines["Arabian"]["Restaurant_Name"]}',
+            value=f'{cuisines["Arabian"]["Aggregate_rating"]}/5.0',
+            help=f"""
+            Culinária: {cuisines["Arabian"]['Cuisines']}\n
+            Nome do Restaurante: {cuisines["Arabian"]['Restaurant_Name']}\n
+            País: {cuisines["Arabian"]['Country_Name']}\n
+            Cidade: {cuisines["Arabian"]['City']}\n
+            Média Prato para dois: {cuisines["Arabian"]['Average_Cost_for_two']} ({cuisines["Arabian"]['Currency']})
+            """,
+        )
+
+    with japanese:
+        st.metric(
+            label=f'Japanese: {cuisines["Japanese"]["Restaurant_Name"]}',
+            value=f'{cuisines["Japanese"]["Aggregate_rating"]}/5.0',
+            help=f"""
+            Culinária: {cuisines["Japanese"]['Cuisines']}\n
+            Nome do Restaurante: {cuisines["Japanese"]['Restaurant_Name']}\n
+            País: {cuisines["Japanese"]['Country_Name']}\n
+            Cidade: {cuisines["Japanese"]['City']}\n
+            Média Prato para dois: {cuisines["Japanese"]['Average_Cost_for_two']} ({cuisines["Japanese"]['Currency']})
+            """,
+        )
+
+    with brazilian:
+        st.metric(
+            label=f'Brazilian: {cuisines["Brazilian"]["Restaurant_Name"]}',
+            value=f'{cuisines["Brazilian"]["Aggregate_rating"]}/5.0',
+            help=f"""
+            Culinária: {cuisines["Brazilian"]['Cuisines']}\n
+            Nome do Restaurante: {cuisines["Brazilian"]['Restaurant_Name']}\n
+            País: {cuisines["Brazilian"]['Country_Name']}\n
+            Cidade: {cuisines["Brazilian"]['City']}\n
+            Média Prato para dois: {cuisines["Brazilian"]['Average_Cost_for_two']} ({cuisines["Brazilian"]['Currency']})
+            """,
+        )
+
+    return None
 
 
 # Função Top 20 Melhores Restaurantes entre os Países e Culinárias Selecionadas
-def top_twenty_best_restaurants(df):
-    """Esta função seleciona os 20 melhores restaurantes com base na maior média de avaliação entre aqueles que têm pelo menos 150 votos.
-    Ela retorna um dataframe com o nome do restaurante, o país, as culinárias oferecidas, a avaliação agregada e o número de votos.
-
-    Etapas:
-    1 - Selecionar os restaurantes com pelo menos 150 votos no dataframe.
-    2 - Agrupar os restaurantes pelo nome.
-    3 - Para cada grupo de restaurantes, selecionar o registro com a maior avaliação agregada e o maior número de votos.
-    4 - Classificar os restaurantes com base na avaliação agregada e no número de votos em ordem decrescente.
-    5 - Selecionar os 20 melhores restaurantes.
-    6 - Resetar o índice do dataframe resultante.
-    7 - Retornar o dataframe com os 20 melhores restaurantes.
-
-    Input: Dados dos países, cidades, restaurantes e tipos de culinária para análise.
-    Output: Tabela com os 20 melhores restaurantes nas condições propostas.
-    """
+def top_best_restaurants(countries_options, top_n, cuisines_options):
     restaurante_maior_nota_media = (
         df.loc[
-            (df["Votes"] >= 150),
+            (df["Votes"] >= 150)
+            & (df["Country_Name"].isin(countries_options))
+            & (df["Cuisines"].isin(cuisines_options)),
             [
                 "Restaurant_Name",
                 "Country_Name",
+                "City",
                 "Cuisines",
                 "Aggregate_rating",
                 "Votes",
@@ -211,16 +275,15 @@ def top_twenty_best_restaurants(df):
         .groupby("Restaurant_Name")
         .max()
         .sort_values(["Aggregate_rating", "Votes"], ascending=False)
-        .head(20)
         .reset_index()
     )
-    return restaurante_maior_nota_media
+    return restaurante_maior_nota_media.head(top_n)
 
 
 # Função Top 10 Melhores/Piores Tipos de Culinária:
 
 
-def top_types_cuisines(df, top_asc):
+def top_types_cuisines(countries_options, top_n, top_asc):
     """Esta função seleciona os dados de tipos de culinária com pelo menos 100 votos, calcula a média de avaliação agregada para
     cada tipo de culinária, classifica os tipos de culinária com base na média em ordem ascendente ou descendente e
     retorna um gráfico de barras dos 10 melhores ou piores tipos de culinária.
@@ -241,7 +304,7 @@ def top_types_cuisines(df, top_asc):
     # Selecionando os dados no Dataframe:
     culinaria_media = round(
         df.loc[
-            (df["Votes"] >= 100),
+            (df["Votes"] >= 150) & (df["Country_Name"].isin(countries_options)),
             [
                 "Cuisines",
                 "Aggregate_rating",
@@ -250,13 +313,14 @@ def top_types_cuisines(df, top_asc):
         .groupby("Cuisines")
         .mean()
         .sort_values(["Aggregate_rating"], ascending=top_asc)
-        .reset_index(),
+        .reset_index()
+        .head(top_n),
         2,
     )
 
     # Desenhar o Gráfico de Linhas:
     fig = px.bar(
-        culinaria_media.head(10),
+        culinaria_media.head(top_n),
         x="Cuisines",
         y="Aggregate_rating",
         text="Aggregate_rating",
@@ -279,281 +343,71 @@ st.sidebar.image(image, width=120)
 
 st.sidebar.markdown("# Fome Zero")
 
-# Filtros da Página:
-st.sidebar.markdown("## Filtros")
-# Filtro de País:
-st.sidebar.markdown("#### Escolha os países para visualizar os dados dos restaurantes:")
-countries_options = st.sidebar.multiselect(
-    "Quais países?",
-    [
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "Indonesia",
-        "New Zeland",
-        "Philippines",
-        "Qatar",
-        "Singapure",
-        "South Africa",
-        "Sri Lanka",
-        "Turkey",
-        "United Arab Emirates",
-        "United States of America",
-    ],
-    default=[
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "United States of America",
-    ],
-)
+# Função Filtros da Página:
 
-# Filtro dos Tipos de Culinária:
-st.sidebar.markdown("#### Escolha os Tipos de Culinária:")
-cuisines_types = st.sidebar.multiselect(
-    "Quais culinárias?",
-    [
-        "Italian",
-        "European",
-        "Filipino",
-        "American",
-        "Korean",
-        "Pizza",
-        "Taiwanese",
-        "Japanese",
-        "Coffee",
-        "Chinese",
-        "Seafood",
-        "Singaporean",
-        "Vietnamese",
-        "Latin American",
-        "Healthy Food",
-        "Cafe",
-        "Fast Food",
-        "Brazilian",
-        "Argentine",
-        "Arabian",
-        "Bakery",
-        "Tex-Mex",
-        "Bar Food",
-        "International",
-        "French",
-        "Steak",
-        "German",
-        "Sushi",
-        "Grill",
-        "Peruvian",
-        "North Eastern",
-        "Ice Cream",
-        "Burger",
-        "Mexican",
-        "Vegetarian",
-        "Contemporary",
-        "Desserts",
-        "Juices",
-        "Beverages",
-        "Spanish",
-        "Thai",
-        "Indian",
-        "BBQ",
-        "Mongolian",
-        "Portuguese",
-        "Greek",
-        "Asian",
-        "Author",
-        "Gourmet Fast Food",
-        "Lebanese",
-        "Modern Australian",
-        "African",
-        "Coffee and Tea",
-        "Australian",
-        "Middle Eastern",
-        "Malaysian",
-        "Tapas",
-        "New American",
-        "Pub Food",
-        "Southern",
-        "Diner",
-        "Donuts",
-        "Southwestern",
-        "Sandwich",
-        "Irish",
-        "Mediterranean",
-        "Cafe Food",
-        "Korean BBQ",
-        "Fusion",
-        "Canadian",
-        "Breakfast",
-        "Cajun",
-        "New Mexican",
-        "Belgian",
-        "Cuban",
-        "Taco",
-        "Caribbean",
-        "Polish",
-        "Deli",
-        "British",
-        "California",
-        "Others",
-        "Eastern European",
-        "Creole",
-        "Ramen",
-        "Ukrainian",
-        "Hawaiian",
-        "Patisserie",
-        "Yum Cha",
-        "Pacific Northwest",
-        "Tea",
-        "Moroccan",
-        "Burmese",
-        "Dim Sum",
-        "Crepes",
-        "Fish and Chips",
-        "Russian",
-        "Continental",
-        "South Indian",
-        "North Indian",
-        "Salad",
-        "Finger Food",
-        "Mandi",
-        "Turkish",
-        "Kerala",
-        "Pakistani",
-        "Biryani",
-        "Street Food",
-        "Nepalese",
-        "Goan",
-        "Iranian",
-        "Mughlai",
-        "Rajasthani",
-        "Mithai",
-        "Maharashtrian",
-        "Gujarati",
-        "Rolls",
-        "Momos",
-        "Parsi",
-        "Modern Indian",
-        "Andhra",
-        "Tibetan",
-        "Kebab",
-        "Chettinad",
-        "Bengali",
-        "Assamese",
-        "Naga",
-        "Hyderabadi",
-        "Awadhi",
-        "Afghan",
-        "Lucknowi",
-        "Charcoal Chicken",
-        "Mangalorean",
-        "Egyptian",
-        "Malwani",
-        "Armenian",
-        "Roast Chicken",
-        "Indonesian",
-        "Western",
-        "Dimsum",
-        "Sunda",
-        "Kiwi",
-        "Asian Fusion",
-        "Pan Asian",
-        "Balti",
-        "Scottish",
-        "Cantonese",
-        "Sri Lankan",
-        "Khaleeji",
-        "South African",
-        "Durban",
-        "World Cuisine",
-        "Izgara",
-        "Home-made",
-        "Giblets",
-        "Fresh Fish",
-        "Restaurant Cafe",
-        "Kumpir",
-        "Döner",
-        "Turkish Pizza",
-        "Ottoman",
-        "Old Turkish Bars",
-        "Kokoreç",
-    ],
-    default=[
-        "Japanese",
-        "Brazilian",
-        "Arabian",
-        "American",
-        "Italian",
-        "BBQ",
-        "Caribbean",
-        "Seafood",
-        "Australian",
-        "Mediterranean",
-        "Vegetarian",
-        "Pizza",
-        "Cuban",
-        "Greek",
-        "Mongolian",
-    ],
-)
+st.sidebar.markdown("## Filtros")
+st.sidebar.markdown("#### Escolha os países para visualizar os dados dos restaurantes:")
+
+
+def create_filter_countries_rest_cuisines(df):
+    countries_options = st.sidebar.multiselect(
+        "Quais países?",
+        df.loc[:, "Country_Name"].unique().tolist(),
+        default=[
+            "Australia",
+            "Brazil",
+            "Canada",
+            "England",
+            "India",
+            "Qatar",
+            "South Africa",
+            "United States of America",
+        ],
+    )
+
+    top_n = st.sidebar.slider(
+        "Selecione a quantidade de Restaurantes que deseja visualizar", 1, 20, 10
+    )
+
+    cuisines_options = st.sidebar.multiselect(
+        "Escolha os Tipos de Culinária ",
+        df.loc[:, "Cuisines"].unique().tolist(),
+        default=[
+            "Home-made",
+            "BBQ",
+            "Japanese",
+            "Brazilian",
+            "Arabian",
+            "American",
+            "Italian",
+        ],
+    )
+
+    return list(countries_options), top_n, cuisines_options
+
 
 # Ativar o Filtro nos Gráficos:
-
-# Filtro de Países:
-linhas_selecionadas = df["Country_Name"].isin(countries_options)
-df = df.loc[linhas_selecionadas, :]
-
-# Filtro dos Tipos de Culinária:
-linhas_selecionadas = df["Cuisines"].isin(cuisines_types)
-df = df.loc[linhas_selecionadas, :]
+countries_options, top_n, cuisines_options = create_filter_countries_rest_cuisines(df)
 
 
 # --------------------------------------------- Layout do Streamlit ---------------------------------------------------------
 
 # Container de Dados sobre os principais tipos culinários:
-st.subheader("Melhores Restaurantes das Principais Culinárias nos Países Selecionados:")
+
 with st.container():
-    col1, col2, col3, col4, col5 = st.columns(5, gap="large")
-    with col1:
-        tipo_culinaria, nome_maior, avaliacao_maior = get_best_restaurant("Italian")
-        col1.metric(
-            f"{tipo_culinaria}: {nome_maior}",
-            f"{avaliacao_maior}/5.0",
-        )
-    with col2:
-        tipo_culinaria, nome_maior, avaliacao_maior = get_best_restaurant("American")
-        col2.metric(
-            f"{tipo_culinaria}: {nome_maior}",
-            f"{avaliacao_maior}/5.0",
-        )
-    with col3:
-        tipo_culinaria, nome_maior, avaliacao_maior = get_best_restaurant("Arabian")
-        col3.metric(
-            f"{tipo_culinaria}: {nome_maior}",
-            f"{avaliacao_maior}/5.0",
-        )
-    with col4:
-        tipo_culinaria, nome_maior, avaliacao_maior = get_best_restaurant("Japanese")
-        col4.metric(
-            f"{tipo_culinaria}: {nome_maior}",
-            f"{avaliacao_maior}/5.0",
-        )
-    with col5:
-        tipo_culinaria, nome_maior, avaliacao_maior = get_best_restaurant("Brazilian")
-        col5.metric(
-            f"{tipo_culinaria}: {nome_maior}",
-            f"{avaliacao_maior}/5.0",
-        )
+    st.subheader("Melhores Restaurantes das Principais Culinárias:")
+    write_metrics()
+
+# Container Tabela Top Melhores Restaurantes entre os Países e Culinárias Selecionadas
 
 with st.container():
     st.markdown("""___""")
-    st.subheader(
-        "Top 20 Melhores Restaurantes entre os Países e Culinárias Selecionadas"
+    st.markdown(
+        f"#### Top {top_n} Melhores Restaurantes entre os Países e Tipos de Culinárias Selecionados"
     )
-    restaurante_maior_nota_media = top_twenty_best_restaurants(df)
+    restaurante_maior_nota_media = top_best_restaurants(
+        countries_options, top_n, cuisines_options
+    )
     st.dataframe(restaurante_maior_nota_media)
 
 with st.container():
@@ -561,15 +415,15 @@ with st.container():
     best, worst = st.columns(2, gap="large")
     with best:
         st.markdown(
-            "<div style='text-align: center'><h4>Top 10 Melhores Tipos de Culinárias</h4></div>",
+            f"<div style='text-align: center'><h4>Top {top_n} Melhores Tipos de Culinárias</h4></div>",
             unsafe_allow_html=True,
         )
-        fig = top_types_cuisines(df, top_asc=False)
+        fig = top_types_cuisines(countries_options, top_n, top_asc=False)
         st.plotly_chart(fig, use_container_width=True)
     with worst:
         st.markdown(
-            "<div style='text-align: center'><h4>Top 10 Piores Tipos de Culinárias</h4></div>",
+            f"<div style='text-align: center'><h4>Top {top_n} Piores Tipos de Culinárias</h4></div>",
             unsafe_allow_html=True,
         )
-        fig = top_types_cuisines(df, top_asc=True)
+        fig = top_types_cuisines(countries_options, top_n, top_asc=True)
         st.plotly_chart(fig, use_container_width=True)

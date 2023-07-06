@@ -147,7 +147,7 @@ df["Price_range"] = df["Price_range"].map(create_price_type)
 
 
 # Função da quantidade de restaurantes por cidades:
-def restaurants_by_countries(df):
+def restaurants_by_countries(countries_options):
     """Esta função cria um gráfico da quantidade de restaurantes registrados por país.
 
     Assim, calcula quantos restaurantes por país existentes no DataFrame. Ela realiza as seguintes etapas:
@@ -168,7 +168,7 @@ def restaurants_by_countries(df):
     cols = ["Country_Name", "Restaurant_ID"]
     # Seleção de Linhas
     df_aux = (
-        df.loc[:, cols]
+        df.loc[df["Country_Name"].isin(countries_options), cols]
         .groupby("Country_Name")
         .count()
         .sort_values(["Restaurant_ID"], ascending=False)
@@ -200,7 +200,7 @@ def restaurants_by_countries(df):
 # Função da quantidade de cidades por país:
 
 
-def cities_by_countries(df):
+def cities_by_countries(countries_options):
     """Essa função calcula e exibe um gráfico de barras mostrando a quantidade de cidades registradas por país..
 
     Assim, calcula quantos restaurantes por cidades que existem no DataFrame. Ela realiza as seguintes etapas:
@@ -222,7 +222,7 @@ def cities_by_countries(df):
     cols = ["Country_Name", "City"]
     # Seleção de Linhas
     df_aux = (
-        df.loc[:, cols]
+        df.loc[df["Country_Name"].isin(countries_options), cols]
         .groupby("Country_Name")
         .nunique()
         .sort_values(["City"], ascending=False)
@@ -250,7 +250,7 @@ def cities_by_countries(df):
 
 
 # Função Média de Avaliações por país:
-def avg_ratings_by_countries(df):
+def avg_ratings_by_countries(countries_options):
     """Essa função calcula a média de avaliações por país a partir de um DataFrame.
 
     Ela realiza as seguintes etapas:
@@ -274,14 +274,17 @@ def avg_ratings_by_countries(df):
 
     # Seleção de Linhas
     df_pais_mais_avaliacoes = (
-        df.loc[:, ["Country_Name", "Votes"]]
+        df.loc[df["Country_Name"].isin(countries_options), ["Country_Name", "Votes"]]
         .groupby("Country_Name")
         .sum()
         .sort_values(["Votes"], ascending=False)
         .reset_index()
     )
     paises_com_mais_restaurantes = (
-        df.loc[:, ["Country_Name", "Restaurant_ID"]]
+        df.loc[
+            df["Country_Name"].isin(countries_options),
+            ["Country_Name", "Restaurant_ID"],
+        ]
         .groupby("Country_Name")
         .count()
         .sort_values(["Restaurant_ID"], ascending=False)
@@ -313,7 +316,7 @@ def avg_ratings_by_countries(df):
 
 
 # Função da Média de Preço p/ Prato p/ Dois:
-def plate_for_two_by_countries(df):
+def plate_for_two_by_countries(countries_options):
     """Essa função calcula a média de preço dos pratos para duas pessoas por país a partir de um DataFrame.
 
     Ela realiza as seguintes etapas:
@@ -336,7 +339,7 @@ def plate_for_two_by_countries(df):
     # Seleção de Linhas
     df_aux = round(
         (
-            df.loc[:, cols]
+            df.loc[df["Country_Name"].isin(countries_options), cols]
             .groupby("Country_Name")
             .mean()
             .sort_values(["Average_Cost_for_two"], ascending=False)
@@ -378,48 +381,34 @@ st.sidebar.image(image, width=120)
 
 st.sidebar.markdown("# Fome Zero")
 
-# Filtros da Página:
+# Função Filtros da Página:
+
 st.sidebar.markdown("## Filtros")
 st.sidebar.markdown("#### Escolha os países para visualizar os dados dos restaurantes:")
 
-countries_options = st.sidebar.multiselect(
-    "Quais países?",
-    [
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "Indonesia",
-        "New Zeland",
-        "Philippines",
-        "Qatar",
-        "Singapure",
-        "South Africa",
-        "Sri Lanka",
-        "Turkey",
-        "United Arab Emirates",
-        "United States of America",
-    ],
-    default=[
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "Qatar",
-        "South Africa",
-        "United States of America",
-    ],
-)
+
+def create_filter_countries(df):
+    countries_options = st.sidebar.multiselect(
+        "Quais países?",
+        df.loc[:, "Country_Name"].unique().tolist(),
+        default=[
+            "Australia",
+            "Brazil",
+            "Canada",
+            "England",
+            "India",
+            "Qatar",
+            "South Africa",
+            "United States of America",
+        ],
+    )
+
+    return list(countries_options)
+
 
 # Ativar o Filtro nos Gráficos:
+countries_options = create_filter_countries(df)
 
-# Filtro de Países:
-linhas_selecionadas = df["Country_Name"].isin(countries_options)
-df = df.loc[linhas_selecionadas, :]
-
-# Filtro no Mapa:
-map_df = df.loc[df["Country_Name"].isin(countries_options), :]
 
 # --------------------------------------------- Layout no Streamlit ---------------------------------------------------------
 
@@ -428,21 +417,21 @@ map_df = df.loc[df["Country_Name"].isin(countries_options), :]
 
 with st.container():
     # Quantidade de Restaurantes por país:
-    fig = restaurants_by_countries(df)
+    fig = restaurants_by_countries(countries_options)
     st.plotly_chart(fig, use_container_width=True)
 
 with st.container():
     # Quantidade de Cidades por país:
-    fig = cities_by_countries(df)
+    fig = cities_by_countries(countries_options)
     st.plotly_chart(fig, use_container_width=True)
 
 with st.container():
     col1, col2 = st.columns(2, gap="large")
     with col1:
         # Média da Quantidade de Avaliações por país:
-        fig = avg_ratings_by_countries(df)
+        fig = avg_ratings_by_countries(countries_options)
         st.plotly_chart(fig, use_container_width=True)
     with col2:
         # Média de Preço p/ Prato p/ Dois:
-        fig = plate_for_two_by_countries(df)
+        fig = plate_for_two_by_countries(countries_options)
         st.plotly_chart(fig, use_container_width=True)

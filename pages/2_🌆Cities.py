@@ -371,45 +371,33 @@ st.sidebar.image(image, width=120)
 
 st.sidebar.markdown("# Fome Zero")
 
-# Filtros da Página:
+# Função Filtros da Página:
+
 st.sidebar.markdown("## Filtros")
 st.sidebar.markdown("#### Escolha os países para visualizar os dados dos restaurantes:")
 
-countries_options = st.sidebar.multiselect(
-    "Quais países?",
-    [
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "India",
-        "Indonesia",
-        "New Zeland",
-        "Philippines",
-        "Qatar",
-        "Singapure",
-        "South Africa",
-        "Sri Lanka",
-        "Turkey",
-        "United Arab Emirates",
-        "United States of America",
-    ],
-    default=[
-        "Australia",
-        "Brazil",
-        "Canada",
-        "England",
-        "Qatar",
-        "South Africa",
-        "United States of America",
-    ],
-)
+
+def create_filter_countries(df):
+    countries_options = st.sidebar.multiselect(
+        "Quais países?",
+        df.loc[:, "Country_Name"].unique().tolist(),
+        default=[
+            "Australia",
+            "Brazil",
+            "Canada",
+            "England",
+            "India",
+            "Qatar",
+            "South Africa",
+            "United States of America",
+        ],
+    )
+
+    return list(countries_options)
+
 
 # Ativar o Filtro nos Gráficos:
-
-# Filtro de Países:
-linhas_selecionadas = df["Country_Name"].isin(countries_options)
-df = df.loc[linhas_selecionadas, :]
+countries_options = create_filter_countries(df)
 
 
 ###############################################
